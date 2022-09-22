@@ -1,0 +1,6 @@
+client_secret.json
+gsuite_token.json
+*client_secret.json
+Temp_Notes.md
+XIQ-GSuite-PPSK-sync.log
+/venv
