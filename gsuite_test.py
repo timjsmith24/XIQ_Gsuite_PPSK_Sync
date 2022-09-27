@@ -8,6 +8,12 @@ from google.auth.exceptions import RefreshError
 import requests
 from pprint import pprint as pp
 
+####################################
+# written by:   Tim Smith
+# e-mail:       tismith@extremenetworks.com
+# date:         12 September 2022
+# version:      1.0.0
+####################################
 
 gs_domain = 'Domain Name'
 gs_group_name = 'GSuite GROUP Name'
