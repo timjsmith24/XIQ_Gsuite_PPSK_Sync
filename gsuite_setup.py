@@ -10,8 +10,8 @@ from google.auth.transport.requests import Request
 ####################################
 # written by:   Tim Smith
 # e-mail:       tismith@extremenetworks.com
-# date:         12 September 2022
-# version:      1.0.0
+# date:         19 April 2023
+# version:      1.1.0
 ####################################
 
 

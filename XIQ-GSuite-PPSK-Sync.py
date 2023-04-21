@@ -11,10 +11,9 @@ from google.auth.exceptions import RefreshError
 ####################################
 # written by:   Tim Smith
 # e-mail:       tismith@extremenetworks.com
-# date:         12 September 2022
-# version:      1.0.0
+# date:         19 April 2023
+# version:      1.1.0
 ####################################
-
 
 # Global Variables - ADD CORRECT VALUES
 gs_domain = 'Domain Name'
@@ -41,7 +40,6 @@ PCG_Maping = {
          "policy_name": "Network Policy name associated with PCG"
     }
 }
-
 
 
 #-------------------------
@@ -90,7 +88,7 @@ def check_token():
     gs_header['Authorization'] = "Bearer " + cred.token
 
 def getGSGroupID(gs_groupname):
-    url = gs_group_url + '?domain=' + gs_domain
+    url = gs_group_url + '?domain=' + gs_domain + "&query=name='" + gs_groupname + "'"
     response = requests.get(url, headers=gs_header, verify=True)
     data = response.json()
     if 'error' in data:
@@ -105,7 +103,7 @@ def getGSGroupID(gs_groupname):
             logmsg = f"Group '{gs_groupname}' was not found in domain {gs_domain}"
             raise TypeError(logmsg)
     else:
-        logmsg = f"No group was not found in domain {gs_domain}"
+        logmsg = f"No group was found in domain {gs_domain}"
         raise TypeError(logmsg)
 
 def retrieveGSUsers(gs_groupname):
@@ -119,7 +117,7 @@ def retrieveGSUsers(gs_groupname):
         raise TypeError(f"Unknown issue collecting the group ID for {gs_groupname}")
 
     gsUsers = []
-    gs_member_url = gs_group_url + "/" + str(group_id) + "/members"
+    gs_member_url = gs_group_url + "/" + str(group_id) + "/members?includeDerivedMembership=true"
     checkForUsers = True
     pageToken = ''
     while checkForUsers:
@@ -145,7 +143,13 @@ def retrieveGSUsers(gs_groupname):
         if 'members' in rawData:
             gsUsers = gsUsers + rawData['members']
     for user in gsUsers:
-        user['name'] = updateUserInfo(user)
+        if user['type'] == 'USER':
+            user['name'] = updateUserInfo(user)
+        else:
+            log_msg = f"{user['email']} is type {user['type']} and not a user. Skipping group member."
+            logging.info(log_msg)
+
+    gsUsers[:] = [x for x in gsUsers if x['type'] == 'USER']
 
     return gsUsers
 
@@ -335,7 +339,7 @@ def main():
  
     ListOfGSgroups, ListOfXIQUserGroups = zip(*group_roles)
 
-    # Collect PSK users
+    # Collect PPSK users
     ppsk_users = []
     for usergroupID in ListOfXIQUserGroups:
         try:
@@ -383,7 +387,7 @@ def main():
             log_msg = ("Unknown Error: Failed to retrieve users from Gsuite")
             print(log_msg)
             print("script exiting....")
-
+            raise SystemExit
         for gs_entry in gs_results:
             if gs_entry['name'] not in gs_users:
                 try:
