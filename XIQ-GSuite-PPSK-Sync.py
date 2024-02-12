@@ -11,8 +11,8 @@ from google.auth.exceptions import RefreshError
 ####################################
 # written by:   Tim Smith
 # e-mail:       tismith@extremenetworks.com
-# date:         19 April 2023
-# version:      1.1.0
+# date:         12 January 2024
+# version:      1.1.1
 ####################################
 
 # Global Variables - ADD CORRECT VALUES
@@ -457,7 +457,6 @@ def main():
                     log_msg = f"User {name} - was successfully add to pcg {policy_name}."
                     logging.info(log_msg)
                     print(log_msg)
-                    pcg_create_error+=1
 
         elif details['accountEnabled'] == False:
             ad_disabled.append(name)
