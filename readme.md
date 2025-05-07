@@ -13,7 +13,7 @@ If you're using an existing script that interacts with the PCG API, **it will br
 
 #### Required Action
 
-A new version of the script (**v2.1.0**) will be released to support pagination. You will need to **upgrade to v2.1.0** to continue using the API successfully after the 25r3 update.
+A new version of the script (**v1.3.0**) will be released to support pagination. You will need to **upgrade to v1.3.0** to continue using the API successfully after the 25r3 update.
 
 ---
 
