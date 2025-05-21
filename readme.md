@@ -1,20 +1,21 @@
 # PCG API Script Notice – Release 25r3
 
-### ⚠️ Important Update for PCG API Users
+### ✅ PCG API Update Now Available
 
-With the upcoming **25r3 release**, the PCG API will be updated to support **pagination**. This change aligns with how other APIs like PPSK operate, enabling you to retrieve users in pages (e.g., 100 users at a time).
+The **25r3 release** has introduced **pagination** to the PCG API, aligning it with other APIs like PPSK. This change allows users to retrieve data in pages (e.g., 100 users at a time) for improved performance.
 
 #### What This Means for You
 
-If you're using an existing script that interacts with the PCG API, **it will break** once 25r3 is deployed. The current script does not support the new pagination logic.
-
-- By default, **only 10 users will be returned** in each API response if your script is not updated.
-- This means your existing script may appear to work but will only process a subset of users, leading to incomplete results.
+If you're using an older script to interact with the PCG API, **it will no longer work correctly** with the 25r3 release.
 
 #### Required Action
 
-A new version of the script (**v1.3.0**) will be released to support pagination. You will need to **upgrade to v1.3.0** to continue using the API successfully after the 25r3 update.
+The updated script (**v1.3.0**) is now available and supports pagination. To ensure uninterrupted functionality:
+
+1. **Download v1.3.0**: Get the new script version from the API portal or repository.
+2. **Copy Variables**: Transfer your existing variables (e.g., API keys, endpoints) from your old script to the new v2.1.0 script.
+3. **Test Your Script**: Verify that the updated script retrieves all users as expected with the new pagination logic.
 
 ---
 
-Stay tuned for the release announcement and updated usage instructions.
+Thank you for updating promptly to keep your workflows running smoothly! For detailed usage instructions or support, refer to the documentation or contact support.

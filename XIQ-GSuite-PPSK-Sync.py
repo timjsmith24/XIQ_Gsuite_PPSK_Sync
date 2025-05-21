@@ -11,13 +11,15 @@ from google.auth.exceptions import RefreshError
 ####################################
 # written by:   Tim Smith
 # e-mail:       tismith@extremenetworks.com
-# date:         22 Oct 2024
-# version:      1.2.0
+# date:         19 May 2025
+# version:      1.3.0
 ####################################
 
 # Global Variables - ADD CORRECT VALUES
 gs_domain = 'Domain Name'
 
+#XIQ MaxPageSize (max is 100)
+pageSize = 100
 
 #XIQ_username = "enter your ExtremeCloudIQ Username"
 #XIQ_password = "enter your ExtremeCLoudIQ password"
@@ -33,7 +35,7 @@ group_roles = [
 
 PCG_Enable = False
 
-PCG_Maping = {
+PCG_Mapping = {
     "XIQ User Group ID" : {
         "UserGroupName": "XIQ User Group Name",
         "policy_id": "Network Policy ID associated with PCG",
@@ -135,7 +137,7 @@ def retrieveGSUsers(gs_groupname):
         elif response.status_code != 200:
             log_msg = (f"Error retrieving Gsuite users - HTTP Status Code: {str(response.status_code)}")
             logging.error(log_msg)
-            logging.warning(f"{response.test}")
+            logging.warning(f"{response.json()}")
             raise TypeError(log_msg)
         rawData = response.json()
         if 'nextPageToken' in rawData:
@@ -174,7 +176,7 @@ def getAccessToken(XIQ_username, XIQ_password):
     if response.status_code != 200:
         log_msg = f"Error getting access token - HTTP Status Code: {str(response.status_code)}"
         logging.error(f"{log_msg}")
-        logging.warning(f"\t\t{response}")
+        logging.warning(f"\t\t{response.json()}")
         raise TypeError(log_msg)
     data = response.json()
 
@@ -212,7 +214,7 @@ def createPPSKuser(name,mail, usergroupID):
         return True
 
 
-def retrievePPSKUsers(pageSize, usergroupID):
+def retrievePPSKUsers(usergroupID):
     page = 1
     pageCount = 1
     firstCall = True
@@ -280,26 +282,39 @@ def addUserToPcg(policy_id, name, email, user_group_name):
     elif response.status_code != 200:
         log_msg = f"HTTP Status Code: {str(response.status_code)}"
         logging.error(log_msg)
-        logging.warning(f"\t\t{response}")
+        logging.warning(f"\t\t{response.json()}")
         raise TypeError(log_msg)
     elif response.status_code == 200:
         return 'Success'
 
 
 def retrievePCGUsers(policy_id):
-    url = xiq_base_url + "/pcgs/key-based/network-policy-" + str(policy_id) + "/users"
-    response = requests.get(url, headers=xiq_headers, verify = True)
-    if response is None:
-        log_msg = f"Error retrieving PCG users for policy id {policy_id} from XIQ - no response!"
-        logging.error(log_msg)
-        raise TypeError(log_msg)
-    elif response.status_code != 200:
-        log_msg = f"Error retrieving PCG users for policy id {policy_id} from XIQ - HTTP Status Code: {str(response.status_code)}"
-        logging.error(log_msg)
-        logging.warning(f"\t\t{response.json()}")
-        raise TypeError(log_msg)
-    rawList = response.json()
-    return rawList
+    page = 1
+    pageCount = 1
+    firstCall = True
+
+    PCGUsers = []
+
+    while page <= pageCount:
+        url = xiq_base_url + "/pcgs/key-based/network-policy-" + str(policy_id) + "/users?page=" + str(page) + "&limit=" + str(pageSize)
+        response = requests.get(url, headers=xiq_headers, verify = True)
+        if response is None:
+            log_msg = f"Error retrieving PCG users for policy id {policy_id} from XIQ - no response!"
+            logging.error(log_msg)
+            raise TypeError(log_msg)
+        elif response.status_code != 200:
+            log_msg = f"Error retrieving PCG users for policy id {policy_id} from XIQ - HTTP Status Code: {str(response.status_code)}"
+            logging.error(log_msg)
+            logging.warning(f"\t\t{response.json()}")
+            raise TypeError(log_msg)
+        
+        rawList = response.json()
+        PCGUsers = PCGUsers + rawList['data']
+        if firstCall == True:
+            pageCount = rawList['total_pages']
+        print(f"completed page {page} of {rawList['total_pages']} collecting PCG Users for policy id {policy_id}")
+        page = rawList['page'] + 1
+    return PCGUsers
 
 
 def deletePCGUsers(policy_id, userId):
@@ -311,13 +326,13 @@ def deletePCGUsers(policy_id, userId):
                 })
     response = requests.delete(url, headers=xiq_headers, data=payload, verify = True)
     if response is None:
-        log_msg = f"Error deleting PPSK user {userId} - no response!"
+        log_msg = f"Error deleting PCG user {userId} - no response!"
         logging.error(log_msg)
         raise TypeError(log_msg)
     elif response.status_code != 202:
-        log_msg = f"Error deleting PPSK user {userId} - HTTP Status Code: {str(response.status_code)}"
+        log_msg = f"Error deleting PCG user {userId} - HTTP Status Code: {str(response.status_code)}"
         logging.error(log_msg)
-        logging.warning(f"\t\t{response}")
+        logging.warning(f"\t\t{response.json()}")
         raise TypeError(log_msg)
     elif response.status_code == 202:
         return 'Success'
@@ -345,7 +360,7 @@ def main():
     ppsk_users = []
     for usergroupID in ListOfXIQUserGroups:
         try:
-            ppsk_users += retrievePPSKUsers(100,usergroupID)
+            ppsk_users += retrievePPSKUsers(usergroupID)
         except TypeError as e:
             print(e)
             print("script exiting....")
@@ -440,11 +455,11 @@ def main():
                 logging.error(log_msg)
                 print(log_msg)
                 ppsk_create_error+=1
-            if PCG_Enable == True and user_created == True and str(details['xiq_role']) in PCG_Maping:
+            if PCG_Enable == True and user_created == True and str(details['xiq_role']) in PCG_Mapping:
                 ## add user to PCG if PCG is Enabled
-                policy_id = PCG_Maping[details['xiq_role']]['policy_id']
-                policy_name = PCG_Maping[details['xiq_role']]['policy_name']
-                user_group_name = PCG_Maping[details['xiq_role']]['UserGroupName']
+                policy_id = PCG_Mapping[details['xiq_role']]['policy_id']
+                policy_name = PCG_Mapping[details['xiq_role']]['policy_name']
+                user_group_name = PCG_Mapping[details['xiq_role']]['UserGroupName']
                 email = details["email"]
                 result = ''
                 try:
@@ -476,21 +491,19 @@ def main():
         pcg_capture_success = True
         # Collect PCG Users if PCG is Enabled
         PCGUsers = []
-        for policy in PCG_Maping:
-            policy_id = PCG_Maping[policy]['policy_id']
+        for policy in PCG_Mapping:
+            policy_id = PCG_Mapping[policy]['policy_id']
 
             try:
                 PCGUsers += retrievePCGUsers(policy_id)
             except TypeError as e:
                 print(e)
                 pcg_capture_success = False
-                # not having ppsk will break later line - if not any(d['name'] == name for d in ppsk_users):
             except:
-                log_msg = ("Unknown Error: Failed to retrieve users from XIQ")
+                log_msg = ("Unknown Error: Failed to retrieve PCG users from XIQ")
                 logging.error(log_msg)
                 print(log_msg)
                 pcg_capture_success = False
-                # not having ppsk will break later line - if not any(d['name'] == name for d in ppsk_users):
 
         log_msg = "Successfully parsed " + str(len(PCGUsers)) + " PCG users"
         logging.info(log_msg)
@@ -504,7 +517,7 @@ def main():
             username = x['user_name']
             # check if any xiq user is not included in active ad users
             if not any(d == username for d in gs_users):
-                if PCG_Enable == True and str(user_group_id) in PCG_Maping:
+                if PCG_Enable == True and str(user_group_id) in PCG_Mapping:
                     if pcg_capture_success == False:
                         log_msg = f"Due to PCG read failure, user {email} cannot be deleted"
                         logging.error(log_msg)
@@ -512,13 +525,12 @@ def main():
                         ppsk_del_error+=1
                         pcg_del_error+=1
                         continue
-                # not having ppsk will break later line - if not any(d['name'] == name for d in ppsk_users):
                     # If PCG is Enabled, Users need to be deleted from PCG group before they can be deleted from User Group
                     if any(d['name'] == username for d in PCGUsers):
                         # Find specific PCG user and get the user id
                         PCGUser = (list(filter(lambda PCGUser: PCGUser['name'] == username, PCGUsers)))[0]
                         pcg_id = PCGUser['id']
-                        for PCG_Map in PCG_Maping.values():
+                        for PCG_Map in PCG_Mapping.values():
                             if PCG_Map['UserGroupName'] == PCGUser['user_group_name']:
                                 policy_id = PCG_Map['policy_id']
                                 policy_name = PCG_Map['policy_name']
@@ -544,7 +556,7 @@ def main():
                             logging.info(log_msg)
                             print(log_msg)
                         else:
-                            log_msg = f"User {username} - {pcg_id} was not successfully deleted from pcg group {policy_name}. User cannot be deleted from the PPSK Group."
+                            log_msg = f"User {username} - {pcg_id} was not successfully deleted from pcg group {policy_name}. User cannot be deleted from the PCG Group."
                             logging.info(log_msg)
                             print(log_msg)
                             ppsk_del_error+=1
