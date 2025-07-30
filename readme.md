@@ -13,7 +13,7 @@ If you're using an older script to interact with the PCG API, **it will no longe
 The updated script (**v1.3.0**) is now available and supports pagination. To ensure uninterrupted functionality:
 
 1. **Download v1.3.0**: Get the new script version from the API portal or repository.
-2. **Copy Variables**: Transfer your existing variables (e.g., API keys, endpoints) from your old script to the new v2.1.0 script.
+2. **Copy Variables**: Transfer your existing variables (e.g., API keys, endpoints) from your old script to the new v1.3.0 script.
 3. **Test Your Script**: Verify that the updated script retrieves all users as expected with the new pagination logic.
 
 ---
